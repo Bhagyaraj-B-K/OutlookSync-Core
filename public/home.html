@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Information</title>
+    <style>
+        table {
+            width: 50%;
+            border-collapse: collapse;
+            margin: 50px auto;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .folder-header {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center;">User Information</h1>
+    <table id="userTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- User data will be inserted here -->
+        </tbody>
+    </table>
+
+    <h2 style="text-align: center;">Emails by Folder</h2>
+    <table id="emailTable">
+        <thead>
+            <tr>
+                <th>Folder Name</th>
+                <th>Subject</th>
+                <th>Sender</th>
+                <th>Recipient</th>
+                <th>Content</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Emails will be inserted here -->
+        </tbody>
+    </table>
+
+    <script>
+        async function fetchUserData() {
+            try {
+                const response = await fetch('/user');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch user data');
+                }
+                const user = await response.json();
+                
+                // Get the table body element
+                const tbody = document.querySelector('#userTable tbody');
+
+                // Clear any existing rows
+                tbody.innerHTML = '';
+
+                // Insert user data into the table
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${user.id}</td>
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                `;
+                tbody.appendChild(row);
+            } catch (error) {
+                console.error('Error fetching user data:', error);
+            }
+        }
+
+        async function fetchEmailData() {
+            try {
+                // Call the sync-email API to sync emails
+                await fetch('/sync-email', { method: 'POST' });
+
+                // Fetch the organized email data from the emails API
+                const response = await fetch('/emails');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch email data');
+                }
+                const data = await response.json();
+
+                const sortedData = Object.keys(data)
+                .sort()
+                .reduce((acc, key) => {
+                    acc[key] = data[key];
+                    return acc;
+                }, {});
+
+                // Get the table body element for emails
+                const tbody = document.querySelector('#emailTable tbody');
+
+                // Clear any existing rows
+                tbody.innerHTML = '';
+
+                // Loop through each folder and its emails
+                for (const folderName in sortedData) {
+                    const folder = sortedData[folderName];
+
+                    // Create a folder row
+                    const folderRow = document.createElement('tr');
+                    folderRow.classList.add('folder-header');
+                    folderRow.innerHTML = `
+                        <td colspan="5">${folderName} (${folder.email_count} emails)</td>
+                    `;
+                    tbody.appendChild(folderRow);
+
+                    // Create rows for each email in the folder
+                    folder.emails.forEach(email => {
+                        const emailRow = document.createElement('tr');
+                        emailRow.innerHTML = `
+                            <td></td>
+                            <td>${email.subject}</td>
+                            <td>${email.sender}</td>
+                            <td>${email.recipient}</td>
+                            <td>${email.content}</td>
+                        `;
+                        tbody.appendChild(emailRow);
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching email data:', error);
+            }
+        }
+
+        // Fetch the user data and email data when the page loads
+        window.onload = () => {
+            fetchUserData();
+            fetchEmailData();
+
+            // Poll the APIs every 10 seconds
+            setInterval(fetchEmailData, 10000);
+        };
+    </script>
+</body>
+</html>
