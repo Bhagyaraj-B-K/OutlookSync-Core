@@ -41,7 +41,7 @@ app.get("/user", ensureAuthenticated, async (req, res) => {
 
 app.post("/sync-email", ensureAuthenticated, async (req, res) => {
   const { id } = req.session.user;
-  const user = await userService.syncEmails(req.session.accessToken,id);
+  const user = await userService.syncEmails(req.session.accessToken, id);
   res.send(user);
 });
 
@@ -49,7 +49,7 @@ app.get("/emails", ensureAuthenticated, async (req, res) => {
   const { id } = req.session.user;
   const emails = await userService.getEmails(id);
   res.send(emails);
-})
+});
 
 // Outlook authentication routes
 app.get("/auth/outlook", passport.authenticate("windowslive"));
@@ -67,5 +67,16 @@ app.get(
   }
 );
 
+app.get("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error during logout:", err);
+      return res.status(500).send("Logout failed");
+    }
+    res.clearCookie("connect.sid");
+    res.redirect("/");
+  });
+});
+
 dbMigration();
-app.listen(3000, () => console.log("Server running on http://localhost:3000"));
+app.listen(3000, () => console.log("Server running on port 3000"));
