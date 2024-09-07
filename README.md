@@ -23,8 +23,8 @@ Before you begin, ensure you have the following installed:
 Start by cloning the repository to your local machine:
 
     
-    git clone https://github.com/your-repo/outlooksync-core.git
-    cd outlooksync-core
+    git clone https://github.com/Bhagyaraj-B-K/OutlookSync-Core.git
+    cd OutlookSync-Core
     
 
 ### 2. Configure Environment Variables
